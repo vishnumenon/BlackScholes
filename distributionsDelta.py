@@ -61,7 +61,7 @@ days_left = set()
 counter = 0
 
 for exdate in expiry_dates:
-	if counter > 4:
+	if counter > 10:
 		break
 	counter += 1
 	for date in dates:
@@ -72,7 +72,7 @@ for exdate in expiry_dates:
 		snip = snip.drop_duplicates(subset = 'strike_price')
 		if len(snip) == 0:
 			continue
-		
+		snip = snip.sort('strike_price', ascending=1)
 		# Now we take the range of delta values and construct a distribution
 
 		daysToExpiration = days_between(date, exdate)
@@ -86,7 +86,6 @@ for exdate in expiry_dates:
 		# Mean center strike values
 		strike_values = [round(sp - current_price) for sp in strike_values]
 		print daysToExpiration
-		# print strike_values
 		
 		# Some parts of the delta column are incomplete in the WRDS data sheets
 		# Need to make an assumption on the delta values, interpolate and fit to 1 0 spread
@@ -110,7 +109,6 @@ for exdate in expiry_dates:
 				curr_val = curr_val - factor
 
 
-
 		# Now, delta value are cleaned up and ready to be bucketed
 		remaining_p = 1
 		for index, d in enumerate(delta_values):
@@ -123,23 +121,8 @@ for exdate in expiry_dates:
 			if d < 0:
 				delta_values[i] = 0
 
-		# print "================"
-		# print "Date is", date
-		# print "Exdate is", exdate
-		# print delta_values
-		# print strike_values
-		# print "First delta is", delta_values[0]
-		# print len(delta_values) - len(strike_values)
-		# print "================"
-
-		# plt.bar(strike_values, delta_values)
-		# plt.show()
-
-		# Finding the price on the expiry day, then find the strike price just higher than that
 		future = getPriceOnDay(stock_object, formatDate(exdate))
-		# print "FUTURE PRICE IS", future
-		# print "CURRENT PRICE IS", current_price
-		# print "CLOSEST CONTRACT IS", max([contract for contract in original_strikes if contract < future])
+
 		just_itm = round(max([contract for contract in original_strikes if contract < future]) - current_price)
 		print "CONTRACT IS", just_itm
 
@@ -191,6 +174,7 @@ for index, element in enumerate(targets):
 plt.show()
 
 for index, element in enumerate(targets):
+	pprint(realdist_dict[element])
 	realdist_dict[element] = normalizeFreqDictionary(realdist_dict[element])
 	plt.subplot(len(targets),1,index+1)
 	plt.axis([-60, 60, 0, .3])
